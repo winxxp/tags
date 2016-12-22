@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"net/url"
 )
 
 type URLValue struct {
@@ -14,12 +15,17 @@ func (u *URLValue) Encode(a interface{}) string {
 	v := reflect.ValueOf(a)
 
 	fmt.Println(v.Kind())
+	
 
-	p := &printer{tagname: u.TagName, visited: make(map[visit]int), depth: 0}
+	p := &printer{
+		tagname: u.TagName,
+		kvs:make(url.Values),
+		visited: make(map[visit]int),
+		depth: 0,
+	}
 	p.printValue(v)
-	fmt.Printf("***** %#v", p)
 
-	return strings.Join(p.kvs, "&")
+	return p.encode()
 }
 
 // printValue must keep track of already-printed pointer values to avoid
@@ -31,20 +37,19 @@ type visit struct {
 
 type printer struct {
 	key     []string
-	kvs     []string
+	kvs     url.Values
 	tagname string
 	visited map[visit]int
 	depth   int
 }
 
-func (p *printer) append(kv string) {
-	p.kvs = append(p.kvs, kv)
+func (p *printer) encode() string {
+	return	p.kvs.Encode()
 }
 
 func (p *printer) printValue(v reflect.Value) {
 	fmt.Println(p.depth, v.Kind(), v.Interface(), p.kvs, (p.key))
 	if p.depth > 10 {
-		p.append("!%v(DEPTH EXCEEDED)")
 		return
 	}
 
@@ -60,56 +65,27 @@ func (p *printer) printValue(v reflect.Value) {
 	case reflect.Complex64, reflect.Complex128:
 		fallthrough
 	case reflect.String:
-		fmt.Println("==", p.key, p.kvs, v.Interface())
-		p.append(strings.Join(p.key, ".") + "=" + fmt.Sprint(v.Interface()))
+		p.kvs.Set(strings.Join(p.key, "."), fmt.Sprint(v.Interface()))
 	case reflect.Map:
-		//t := v.Type()
-		//if showType {
-		//	io.WriteString(p, t.String())
-		//}
-		//writeByte(p, '{')
-		//if nonzero(v) {
-		//	expand := !canInline(v.Type())
-		//	pp := p
-		//	if expand {
-		//		writeByte(p, '\n')
-		//		pp = p.indent()
-		//	}
-		//	keys := v.MapKeys()
-		//	for i := 0; i < v.Len(); i++ {
-		//		showTypeInStruct := true
-		//		k := keys[i]
-		//		mv := v.MapIndex(k)
-		//		pp.printValue(k, false, true)
-		//		writeByte(pp, ':')
-		//		if expand {
-		//			writeByte(pp, '\t')
-		//		}
-		//		showTypeInStruct = t.Elem().Kind() == reflect.Interface
-		//		pp.printValue(mv, showTypeInStruct, true)
-		//		if expand {
-		//			io.WriteString(pp, ",\n")
-		//		} else if i < v.Len()-1 {
-		//			io.WriteString(pp, ", ")
-		//		}
-		//	}
-		//	if expand {
-		//		pp.tw.Flush()
-		//	}
-		//}
+		if nonzero(v) {
+			keys := v.MapKeys()
+			for i := 0; i < v.Len(); i++ {
+				k := keys[i]
+				mv := v.MapIndex(k)
+				p.key = append(p.key, fmt.Sprint(k))
+				p.printValue(mv)
+			}
+		}
 	case reflect.Struct:
 		t := v.Type()
 		if v.CanAddr() {
 			addr := v.UnsafeAddr()
 			vis := visit{addr, t}
 			if vd, ok := p.visited[vis]; ok && vd < p.depth {
-				p.append(t.String() + "{(CYCLIC REFERENCE)}")
 				break // don't print v again
 			}
 			p.visited[vis] = p.depth
 		}
-
-		fmt.Println("---", t.String())
 
 		if nonzero(v) {
 			for i := 0; i < v.NumField(); i++ {
@@ -123,7 +99,12 @@ func (p *printer) printValue(v reflect.Value) {
 			}
 		}
 	case reflect.Array, reflect.Slice:
-		fmt.Println("array, slice")
+		for i := 0; i < v.Len(); i++ {
+			n:=len(p.key)
+			p.key = append(p.key, fmt.Sprintf("[%d]", i))
+			p.printValue(v.Index(i))
+			p.key = p.key[0:n]
+		}
 	case reflect.Ptr:
 		e := v.Elem()
 		if e.IsValid() {
