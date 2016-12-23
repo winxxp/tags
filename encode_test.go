@@ -9,10 +9,11 @@ type S2 struct {
 }
 
 type MockS struct {
-	Field1 int            `mts:"field1"`
-	Field2 string         `mts:"field2"`
-	Field3 S2             `mts:"field3"`
-	Field4 map[string]int `mts:"field3"`
+	Field1 int            `mts:"int"`
+	Field2 string         `mts:"string"`
+	Field3 S2             `mts:"struct"`
+	Field4 map[string]int `mts:"map"`
+	Field5 []S2           `mts:"structPtr"`
 }
 
 func TestEncode(t *testing.T) {
@@ -26,6 +27,16 @@ func TestEncode(t *testing.T) {
 		Field4: map[string]int{
 			"map1": 100,
 			"map0": 99,
+		},
+		Field5: []S2{
+			S2{
+				SF1:  2,
+				Data: []int{20, 21},
+			},
+			S2{
+				SF1:  3,
+				Data: []int{30, 31},
+			},
 		},
 	}
 
