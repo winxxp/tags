@@ -1,55 +1,56 @@
 package tags
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
+	"time"
 )
 
-type S2 struct {
-	SF1  int   `tag:"sf1"`
-	Data []int `tag:"data"`
+type Device struct {
+	SN      string            `tag:"sn"`
+	Name    string            `tag:"name"`
+	Mode    int               `tag:"mode"`
+	Channel []Channel         `tag:"channel"`
+	Remark  map[string]string `tag:"remark"`
 }
 
-type MockS struct {
-	Field1 int            `tag:"int"`
-	Field2 string         `tag:"string"`
-	Field3 S2             `tag:"struct"`
-	Field4 map[string]int `tag:"map"`
-	Field5 []S2           `tag:"structArray"`
-	Field6 *S2            `tag:"structPtr"`
-	Field7 *S2            `tag:"structPtr"`
+type Channel struct {
+	Name string  `tag:"name"`
+	Eu   string  `tag:"eu"`
+	DC   float32 `tag:"dc"`
+	Gain float32 `tag:"gain"`
 }
 
-var data = MockS{
-	Field1: 1,
-	Field2: "test",
-	Field3: S2{
-		SF1:  2,
-		Data: []int{10, 11, 12},
-	},
-	Field4: map[string]int{
-		"map1": 100,
-		"map0": 99,
-	},
-	Field5: []S2{
-		S2{
-			SF1:  2,
-			Data: []int{20, 21},
+var device = Device{
+	SN:   "dd-aa-xx",
+	Name: "my-device",
+	Mode: 2,
+	Channel: []Channel{
+		Channel{
+			Name: "ch1",
+			Eu:   "mV",
+			DC:   0,
+			Gain: 1,
 		},
-		S2{
-			SF1:  3,
-			Data: []int{30, 31},
+		Channel{
+			Name: "ch1",
+			Eu:   "mV",
+			DC:   0,
+			Gain: 1,
 		},
 	},
-	Field6: &S2{
-		SF1:  4,
-		Data: []int{41, 42},
+	Remark: map[string]string{
+		"build":   time.Now().String(),
+		"version": "1.0.1",
 	},
 }
 
 func TestEncode(t *testing.T) {
 	u := URLValue{TagName: "tag"}
-	str := u.Encode(&data)
+	str := u.Encode(&device)
+
+	fmt.Println(str)
 
 	values, err := url.ParseQuery(str)
 	if err != nil {
@@ -58,14 +59,14 @@ func TestEncode(t *testing.T) {
 	}
 
 	for k, v := range values {
-		t.Logf("%s=%s\n", k, v)
+		fmt.Printf("%s=%s\n", k, v)
 	}
 }
 
 func BenchmarkURLValue_Encode(b *testing.B) {
 	u := URLValue{TagName: "tag"}
 	for i := 0; i < b.N; i++ {
-		_ = u.Encode(data)
+		_ = u.Encode(device)
 	}
 }
 
