@@ -1,7 +1,6 @@
 package tags
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -47,10 +46,12 @@ var device = Device{
 }
 
 func TestEncode(t *testing.T) {
-	u := URLValue{TagName: "tag"}
-	str := u.Encode(&device)
+	u := Enc{TagName: "tag"}
+	v := u.Values(&device)
+	str := v.Encode()
 
-	fmt.Println(str)
+	t.Log(v)
+	t.Log(str)
 
 	values, err := url.ParseQuery(str)
 	if err != nil {
@@ -59,19 +60,19 @@ func TestEncode(t *testing.T) {
 	}
 
 	for k, v := range values {
-		fmt.Printf("%s=%s\n", k, v)
+		t.Logf("%s=%s\n", k, v)
 	}
 }
 
 func BenchmarkURLValue_Encode(b *testing.B) {
-	u := URLValue{TagName: "tag"}
+	u := Enc{TagName: "tag"}
 	for i := 0; i < b.N; i++ {
 		_ = u.Encode(device)
 	}
 }
 
 func TestURLValue_Encode1(t *testing.T) {
-	u := URLValue{TagName: "tag"}
+	u := Enc{TagName: "tag"}
 	a := 1
 	str := u.Encode(a)
 	t.Log(str)

@@ -8,21 +8,31 @@ import (
 	"strconv"
 )
 
-type URLValue struct {
+type Enc struct {
 	TagName string
 }
 
-func (u *URLValue) Encode(a interface{}) string {
+func New(tag string) *Enc {
+	return &Enc{
+		TagName: tag,
+	}
+}
+
+func (e *Enc) Values(a interface{}) url.Values {
 	v := reflect.ValueOf(a)
 	p := &printer{
-		tagname: u.TagName,
+		tagname: e.TagName,
 		kvs:     make(url.Values),
 		visited: make(map[visit]int),
 		depth:   0,
 	}
 	p.printValue(v)
 
-	return p.encode()
+	return p.kvs
+}
+
+func (e *Enc) Encode(a interface{}) string {
+	return e.Values(a).Encode()
 }
 
 type visit struct {

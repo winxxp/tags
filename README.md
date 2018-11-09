@@ -45,7 +45,7 @@ var device = Device{
 	},
 }
 
-u := tags.URLValue{TagName: "tag"}
+u := &tags.URLValue{TagName: "tag"}
 str := u.Encode(&device)
 
 /*
