@@ -6,25 +6,67 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
-type Enc struct {
-	TagName string
+type Finder interface {
+	Find(t reflect.StructTag, tag string) (string, bool)
 }
 
-func New(tag string) *Enc {
+type SubTag struct {
+	subTag string
+}
+
+func (s *SubTag) Find(t reflect.StructTag, tag string) (string, bool) {
+	v, b := t.Lookup(tag)
+	if len(s.subTag) == 0 || !b {
+		return v, b
+	}
+
+	l := len(s.subTag)
+
+	sep := strings.Split(v, ",")
+	for _, value := range sep {
+		if strings.HasPrefix(value, s.subTag+"=") {
+			tagVal := value[l+1:]
+			return tagVal, len(tagVal) != 0
+		}
+	}
+
+	return v, true
+}
+
+type Tag struct {
+}
+
+func (Tag) Find(t reflect.StructTag, tag string) (string, bool) {
+	return t.Lookup(tag)
+}
+
+type Enc struct {
+	tagName string
+	finder  Finder
+}
+
+func New(tag string, finder Finder) *Enc {
+	if finder == nil {
+		finder = &Tag{}
+	}
+
 	return &Enc{
-		TagName: tag,
+		tagName: tag,
+		finder:  finder,
 	}
 }
 
 func (e *Enc) Values(a interface{}) url.Values {
 	v := reflect.ValueOf(a)
 	p := &printer{
-		tagname: e.TagName,
+		tagname: e.tagName,
 		kvs:     make(url.Values),
 		visited: make(map[visit]int),
 		depth:   0,
+		finder:  e.finder,
 	}
 	p.printValue(v)
 
@@ -46,6 +88,7 @@ type printer struct {
 	tagname string
 	visited map[visit]int
 	depth   int
+	finder  Finder
 }
 
 func (p *printer) encode() string {
@@ -92,7 +135,7 @@ func (p *printer) printValue(v reflect.Value) {
 
 		for i := 0; i < v.NumField(); i++ {
 			f := t.Field(i)
-			if tag, ok := f.Tag.Lookup(p.tagname); ok && tag != "" {
+			if tag, ok := p.finder.Find(f.Tag, p.tagname); ok && tag != "" {
 				n := p.key.Len()
 				p.printKey(tag, n)
 				p.printValue(getField(v, i))
