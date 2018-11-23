@@ -13,11 +13,17 @@ type Finder interface {
 	Find(t reflect.StructTag, tag string) (string, bool)
 }
 
-type SubTag struct {
+type SubTagFinder struct {
 	subTag string
 }
 
-func (s *SubTag) Find(t reflect.StructTag, tag string) (string, bool) {
+func NewSubTagFinder(tag string) *SubTagFinder {
+	return &SubTagFinder{
+		subTag: tag,
+	}
+}
+
+func (s *SubTagFinder) Find(t reflect.StructTag, tag string) (string, bool) {
 	v, b := t.Lookup(tag)
 	if len(s.subTag) == 0 || !b {
 		return v, b

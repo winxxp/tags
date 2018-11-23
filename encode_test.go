@@ -90,7 +90,7 @@ func BenchmarkURLValue_Encode(b *testing.B) {
 }
 
 func TestURLValue_Encode1(t *testing.T) {
-	u := New("tag", &SubTag{"name"})
+	u := New("tag", NewSubTagFinder("name"))
 	v := u.Values(&device)
 	str := v.Encode()
 
