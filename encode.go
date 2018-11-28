@@ -114,7 +114,7 @@ func (p *printer) printValue(v reflect.Value) {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		p.kvs.Set(p.key.String(), strconv.FormatUint(v.Uint(), 10))
 	case reflect.Float32, reflect.Float64:
-		p.kvs.Set(p.key.String(), strconv.FormatFloat(v.Float(), 'G', -1, 64))
+		p.kvs.Set(p.key.String(), strconv.FormatFloat(v.Float(), 'f', -1, 64))
 	case reflect.Complex64, reflect.Complex128:
 		p.kvs.Set(p.key.String(), fmt.Sprint(v.Interface()))
 	case reflect.String:

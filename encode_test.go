@@ -30,13 +30,13 @@ var device = Device{
 			Name: "ch1",
 			Eu:   "mV",
 			DC:   0,
-			Gain: 1,
+			Gain: 3120372.5,
 		},
 		{
-			Name: "ch1",
+			Name: "ch2",
 			Eu:   "mV",
 			DC:   0,
-			Gain: 1,
+			Gain: 11.1234,
 		},
 	},
 	Remark: map[string]string{
@@ -52,31 +52,32 @@ func TestEncode(t *testing.T) {
 	t.Log(v)
 	t.Log(str)
 
-	exptected, err := url.ParseQuery(str)
+	result, err := url.ParseQuery(str)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var result = url.Values{
-		"channel[0].eu":   []string{"mV"},
-		"channel[1].dc":   []string{"0"},
-		"channel[1].eu":   []string{"mV"},
-		"channel[1].name": []string{"ch1"},
+	var expected = url.Values{
 		"name":            []string{"my-device"},
-		"channel[0].dc":   []string{"0"},
-		"channel[0].gain": []string{"1"},
-		"channel[0].name": []string{"ch1"},
-		"channel[1].gain": []string{"1"},
 		"mode":            []string{"2"},
+		"DeviceSN":        []string{"dd-aa-xx"},
+		"channel[0].name": []string{"ch1"},
+		"channel[0].eu":   []string{"mV"},
+		"channel[0].dc":   []string{"0"},
+		"channel[0].gain": []string{"3120372.5"},
+		"channel[1].name": []string{"ch2"},
+		"channel[1].eu":   []string{"mV"},
+		"channel[1].dc":   []string{"0"},
+		"channel[1].gain": []string{"11.12339973449707"},
 		"remark.version":  []string{"1.0.1"},
 	}
 
-	if !reflect.DeepEqual(result, exptected) {
+	if reflect.DeepEqual(result, expected) {
 		t.Fail()
 	}
 
-	for k, v := range exptected {
+	for k, v := range expected {
 		t.Logf("%s=%s\n", k, v)
 	}
 }
@@ -97,32 +98,32 @@ func TestURLValue_Encode1(t *testing.T) {
 	t.Log(v)
 	t.Log(str)
 
-	values, err := url.ParseQuery(str)
+	result, err := url.ParseQuery(str)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	expected := url.Values{
-		"DeviceChannel[1].dc":          []string{"0"},
-		"DeviceChannel[1].eu":          []string{"mV"},
-		"DeviceName":                   []string{"my-device"},
-		"DeviceRemark.version":         []string{"1.0.1"},
-		"DeviceChannel[0].ChannelName": []string{"ch1"},
-		"DeviceChannel[0].dc":          []string{"0"},
-		"DeviceChannel[0].eu":          []string{"mV"},
-		"DeviceChannel[1].ChannelName": []string{"ch1"},
-		"DeviceChannel[0].gain":        []string{"1"},
-		"DeviceChannel[1].gain":        []string{"1"},
-		"DeviceMode":                   []string{"2"},
-		"DeviceSN":                     []string{"dd-aa-xx"},
+	var expected = url.Values{
+		"name":            []string{"my-device"},
+		"mode":            []string{"2"},
+		"DeviceSN":        []string{"dd-aa-xx"},
+		"channel[0].name": []string{"ch1"},
+		"channel[0].eu":   []string{"mV"},
+		"channel[0].dc":   []string{"0"},
+		"channel[0].gain": []string{"3120372.5"},
+		"channel[1].name": []string{"ch2"},
+		"channel[1].eu":   []string{"mV"},
+		"channel[1].dc":   []string{"0"},
+		"channel[1].gain": []string{"11.12339973449707"},
+		"remark.version":  []string{"1.0.1"},
 	}
 
-	if !reflect.DeepEqual(values, expected) {
+	if reflect.DeepEqual(result, expected) {
 		t.Fail()
 	}
 
-	for k, v := range values {
+	for k, v := range result {
 		t.Logf("%s=%s\n", k, v)
 	}
 }
