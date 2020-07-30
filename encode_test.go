@@ -7,11 +7,12 @@ import (
 )
 
 type Device struct {
-	SN      string            `tag:"sn,name=DeviceSN" json:"sn"`
-	Name    string            `tag:"name,name=DeviceName" json:"name"`
-	Mode    int               `tag:"mode,name=DeviceMode" json:"mode"`
-	Channel []Channel         `tag:"channel,name=DeviceChannel" json:"channel"`
-	Remark  map[string]string `tag:"remark,name=DeviceRemark" json:"remark"`
+	SN        string            `tag:"sn,name=DeviceSN" json:"sn"`
+	Name      string            `tag:"name,name=DeviceName" json:"name"`
+	Mode      int               `tag:"mode,name=DeviceMode" json:"mode"`
+	StartTime []int             `tag:"startTime,name=StartTime" json:"startTime"`
+	Channel   []Channel         `tag:"channel,name=DeviceChannel" json:"channel"`
+	Remark    map[string]string `tag:"remark,name=DeviceRemark" json:"remark"`
 }
 
 type Channel struct {
@@ -22,9 +23,10 @@ type Channel struct {
 }
 
 var device = Device{
-	SN:   "dd-aa-xx",
-	Name: "my-device",
-	Mode: 2,
+	SN:        "dd-aa-xx",
+	Name:      "my-device",
+	Mode:      2,
+	StartTime: []int{1, 2, 3},
 	Channel: []Channel{
 		{
 			Name: "ch1",
@@ -58,6 +60,10 @@ func TestEncode(t *testing.T) {
 		return
 	}
 
+	for k, v := range result {
+		t.Logf("%s=%s\n", k, v)
+	}
+
 	var expected = url.Values{
 		"name":            []string{"my-device"},
 		"mode":            []string{"2"},
@@ -71,15 +77,15 @@ func TestEncode(t *testing.T) {
 		"channel[1].dc":   []string{"0"},
 		"channel[1].gain": []string{"11.12339973449707"},
 		"remark.version":  []string{"1.0.1"},
+		"startTime[0]":    []string{"1"},
+		"startTime[1]":    []string{"2"},
+		"startTime[2]":    []string{"3"},
 	}
 
 	if reflect.DeepEqual(result, expected) {
 		t.Fail()
 	}
 
-	for k, v := range expected {
-		t.Logf("%s=%s\n", k, v)
-	}
 }
 
 func BenchmarkURLValue_Encode(b *testing.B) {
@@ -103,6 +109,9 @@ func TestURLValue_Encode1(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	for k, v := range result {
+		t.Logf("%s=%s\n", k, v)
+	}
 
 	var expected = url.Values{
 		"name":            []string{"my-device"},
@@ -117,13 +126,12 @@ func TestURLValue_Encode1(t *testing.T) {
 		"channel[1].dc":   []string{"0"},
 		"channel[1].gain": []string{"11.12339973449707"},
 		"remark.version":  []string{"1.0.1"},
+		"StartTime[0]":    []string{"1"},
+		"StartTime[1]":    []string{"2"},
+		"StartTime[2]":    []string{"3"},
 	}
 
 	if reflect.DeepEqual(result, expected) {
 		t.Fail()
-	}
-
-	for k, v := range result {
-		t.Logf("%s=%s\n", k, v)
 	}
 }
